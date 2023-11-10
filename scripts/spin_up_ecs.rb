@@ -39,8 +39,11 @@ override_file_contents = <<~JSON
 JSON
 
 if action == 'contract'
+  puts "Waiting for service to redeploy..."
   `aws ecs wait services-stable --cluster #{RESOURCES["APP_CLUSTER"]} --services #{RESOURCES["APP_SERVICE"]}`
+  puts "Deployment complete."
 end
+puts "Spinning up Fargate task running laridae to #{action}"
 environment_override_file.write(override_file_contents)
 environment_override_file.close
 task_creation_result = JSON.parse(`#{COMMAND}`)

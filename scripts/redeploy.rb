@@ -10,7 +10,10 @@ docker tag #{RESOURCES["IMAGE_NAME"]}:${GITHUB_SHA} #{RESOURCES["APP_IMAGE_URL"]
 docker tag #{RESOURCES["IMAGE_NAME"]}:${GITHUB_SHA} #{RESOURCES["APP_IMAGE_URL"]}:latest
 docker push #{RESOURCES["APP_IMAGE_URL"]}:${GITHUB_SHA}
 docker push #{RESOURCES["APP_IMAGE_URL"]}:latest
+echo "Updating service..."
 aws ecs update-service --cluster #{RESOURCES["APP_CLUSTER"]} --service #{RESOURCES["APP_SERVICE"]} --force-new-deployment
+"Waiting for service to redeploy..."
 aws ecs wait services-stable --cluster #{RESOURCES["APP_CLUSTER"]} --services #{RESOURCES["APP_SERVICE"]}
+echo "Deployment complete!"
 HEREDOC
 `#{COMMAND}`

@@ -2,7 +2,7 @@ name: "laridae"
 description: "Expands/contracts db schema laridae and deploys new application code to ECS."
 inputs:
   action:
-    description: "expand (db schema using laridae) / deploy (new code to Fargate) / contract (db schema using laridae)"
+    description: "expand (db schema using laridae) / deploy (new code to Fargate) / contract (db schema using laridae) / full"
     required: true
   aws-access-key-id:
     description: "AWS access key Id"
@@ -19,12 +19,12 @@ inputs:
 runs:
   using: composite
   steps:
-    - if: ${{ inputs.action == 'deploy' }}
+    - if: ${{ inputs.action == 'deploy' || inputs.action == 'full' }}
       name: Check out application code.
       uses: actions/checkout@v4
       with:
         path: repo
-    - if: ${{ inputs.action == 'expand' }}
+    - if: ${{ inputs.action == 'expand' || inputs.action == 'full' }}
       name: Check out migration script
       uses: actions/checkout@v4
       with:
@@ -47,19 +47,19 @@ runs:
         aws-access-key-id: ${{ inputs.aws-access-key-id }}
         aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
         aws-region: ${{ inputs.aws-region }}
-    - if: ${{ inputs.action == 'expand' }}
+    - if: ${{ inputs.action == 'expand' || inputs.action == 'full' }}
       name: Spin up ECS task running laridae to expand
       env:
         RESOURCE_NAMES: ${{ inputs.aws-resource-names }}
       run: ruby scripts/scripts/spin_up_ecs.rb expand
       shell: bash
-    - if: ${{ inputs.action == 'deploy'}}
+    - if: ${{ inputs.action == 'deploy' || inputs.action == 'full'}}
       name: Deploy new code to Fargate
       env:
         RESOURCE_NAMES: ${{ inputs.aws-resource-names }}
       run: ruby scripts/scripts/redeploy.rb
       shell: bash
-    - if: ${{ inputs.action == 'contract' }}
+    - if: ${{ inputs.action == 'contract' || inputs.action == 'full' }}
       name: Spin up ECS task running laridae to contract
       env:
         RESOURCE_NAMES: ${{ inputs.aws-resource-names }}
