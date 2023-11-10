@@ -4,6 +4,18 @@ inputs:
   action:
     description: "expand (db schema using laridae) / deploy (new code to Fargate) / contract (db schema using laridae)"
     required: true
+  aws-access-key-id:
+    description: "AWS access key Id"
+    required: true
+  aws-secret-access-key:
+    description: "AWS secret access key"
+    required: true
+  aws-region:
+    description: "AWS region"
+    required: true
+  aws-resource-names:
+    description: "Resource names in AWS"
+    required: true
 runs:
   using: composite
   steps:
@@ -31,21 +43,21 @@ runs:
     - name: Authenticate to AWS
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_REGION }}
+        aws-access-key-id: ${{ inputs.aws-access-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+        aws-region: ${{ inputs.aws-region }}
     - if: ${{ inputs.action == 'expand' }}
       name: Spin up ECS task running laridae to expand
       env:
-        LARIDAE_SECRETS: ${{ secrets.LARIDAE_SECRETS }}
+        RESOURCE_NAMES: ${{ inputs.aws-resource-names }}
       run: ruby scripts/scripts/spin_up_ecs.rb expand
     - if: ${{ inputs.action == 'deploy'}}
       name: Deploy new code to Fargate
       env:
-        LARIDAE_SECRETS: ${{ secrets.LARIDAE_SECRETS }}
+        RESOURCE_NAMES: ${{ inputs.aws-resource-names }}
       run: ruby scripts/scripts/redeploy.rb
     - if: ${{ inputs.action == 'contract' }}
       name: Spin up ECS task running laridae to contract
       env:
-        LARIDAE_SECRETS: ${{ secrets.LARIDAE_SECRETS }}
+        RESOURCE_NAMES: ${{ inputs.aws-resource-names }}
       run: ruby scripts/scripts/spin_up_ecs.rb contract

@@ -1,5 +1,5 @@
 require 'json'
-require_relative './secrets.rb'
+require_relative './resource_names.rb'
 
 MIGRATION_SCRIPT_FILENAME = "#{__dir__}/../migration_script/laridae_migration.json"
 action = ARGV[0]
@@ -12,10 +12,10 @@ end
 
 COMMAND = <<~HEREDOC
 aws ecs run-task \
-  --cluster #{SECRETS["LARIDAE_CLUSTER"]} \
-  --task-definition #{SECRETS["LARIDAE_TASK_DEFINITION"]} \
+  --cluster #{RESOURCES["LARIDAE_CLUSTER"]} \
+  --task-definition #{RESOURCES["LARIDAE_TASK_DEFINITION"]} \
   --launch-type FARGATE \
-  --network-configuration 'awsvpcConfiguration={subnets=[#{SECRETS["SUBNET"]}],securityGroups=[#{SECRETS["LARIDAE_SECURITY_GROUP"]}],assignPublicIp=ENABLED}' \
+  --network-configuration 'awsvpcConfiguration={subnets=[#{RESOURCES["SUBNET"]}],securityGroups=[#{RESOURCES["LARIDAE_SECURITY_GROUP"]}],assignPublicIp=ENABLED}' \
   --overrides file://env_override.json
 HEREDOC
 
@@ -39,7 +39,7 @@ override_file_contents = <<~JSON
 JSON
 
 if action == 'contract'
-  `aws ecs wait services-stable --cluster #{SECRETS["APP_CLUSTER"]} --services #{SECRETS["APP_SERVICE"]}`
+  `aws ecs wait services-stable --cluster #{RESOURCES["APP_CLUSTER"]} --services #{RESOURCES["APP_SERVICE"]}`
 end
 environment_override_file.write(override_file_contents)
 environment_override_file.close
@@ -47,7 +47,7 @@ task_creation_result = JSON.parse(`#{COMMAND}`)
 task_id = task_creation_result['tasks'][0]['taskArn']
 puts "Polling task status..."
 loop do
-  task_describe_result = JSON.parse(`aws ecs describe-tasks --cluster "#{SECRETS["LARIDAE_CLUSTER"]}" --tasks #{task_id}`)
+  task_describe_result = JSON.parse(`aws ecs describe-tasks --cluster "#{RESOURCES["LARIDAE_CLUSTER"]}" --tasks #{task_id}`)
   status = task_describe_result["tasks"][0]["attachments"][0]["status"]
   puts status
   break if status == 'DELETED'
