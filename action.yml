@@ -1,0 +1,51 @@
+name: "laridae"
+description: "Expands/contracts db schema laridae and deploys new application code to ECS."
+inputs:
+  action:
+    description: "expand (db schema using laridae) / deploy (new code to Fargate) / contract (db schema using laridae)"
+    required: true
+runs:
+  using: composite
+  steps:
+    - if: ${{ inputs.action == 'deploy' }}
+      name: Check out application code.
+      uses: actions/checkout@v4
+      with:
+        path: repo
+    - if: ${{ inputs.action == 'expand' }}
+      name: Check out migration script
+      uses: actions/checkout@v4
+      with:
+        sparse-checkout: |
+          laridae_migration.json
+        sparse-checkout-cone-mode: false
+        path: migration_script
+    - name: Checkout action scripts
+      uses: actions/checkout@v4
+      with:
+        repository: 2308-team-8/laridae_action
+        sparse-checkout: |
+          scripts
+        sparse-checkout-cone-mode: false
+        path: scripts
+    - name: Authenticate to AWS
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+    - if: ${{ inputs.action == 'expand' }}
+      name: Spin up ECS task running laridae to expand
+      env:
+        LARIDAE_SECRETS: ${{ secrets.LARIDAE_SECRETS }}
+      run: ruby scripts/scripts/spin_up_ecs.rb expand
+    - if: ${{ inputs.action == 'deploy'}}
+      name: Deploy new code to Fargate
+      env:
+        LARIDAE_SECRETS: ${{ secrets.LARIDAE_SECRETS }}
+      run: ruby scripts/scripts/redeploy.rb
+    - if: ${{ inputs.action == 'contract' }}
+      name: Spin up ECS task running laridae to contract
+      env:
+        LARIDAE_SECRETS: ${{ secrets.LARIDAE_SECRETS }}
+      run: ruby scripts/scripts/spin_up_ecs.rb contract
