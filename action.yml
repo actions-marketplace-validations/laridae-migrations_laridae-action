@@ -1,4 +1,4 @@
-name: "laridae"
+name: "laridae-postgres-db-schema-migrations"
 description: "Expands/contracts db schema laridae and deploys new application code to ECS."
 inputs:
   action:
