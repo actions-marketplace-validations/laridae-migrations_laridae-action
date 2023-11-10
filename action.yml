@@ -51,13 +51,16 @@ runs:
       env:
         RESOURCE_NAMES: ${{ inputs.aws-resource-names }}
       run: ruby scripts/scripts/spin_up_ecs.rb expand
+      shell: bash
     - if: ${{ inputs.action == 'deploy'}}
       name: Deploy new code to Fargate
       env:
         RESOURCE_NAMES: ${{ inputs.aws-resource-names }}
       run: ruby scripts/scripts/redeploy.rb
+      shell: bash
     - if: ${{ inputs.action == 'contract' }}
       name: Spin up ECS task running laridae to contract
       env:
         RESOURCE_NAMES: ${{ inputs.aws-resource-names }}
       run: ruby scripts/scripts/spin_up_ecs.rb contract
+      shell: bash
