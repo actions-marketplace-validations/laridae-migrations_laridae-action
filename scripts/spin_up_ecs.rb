@@ -1,7 +1,7 @@
 require 'json'
 require_relative './resource_names.rb'
 
-MIGRATION_SCRIPT_FILENAME = "#{__dir__}/../migration_script/laridae_migration.json"
+MIGRATION_SCRIPT_FILENAME = "#{__dir__}/../../migration_script/laridae_migration.json"
 action = ARGV[0]
 
 if File.exist?(MIGRATION_SCRIPT_FILENAME)
