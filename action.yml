@@ -24,8 +24,7 @@ runs:
       uses: actions/checkout@v4
       with:
         path: repo
-    - if: ${{ inputs.action == 'expand' || inputs.action == 'full' }}
-      name: Check out migration script
+    - name: Check out migration script
       uses: actions/checkout@v4
       with:
         sparse-checkout: |

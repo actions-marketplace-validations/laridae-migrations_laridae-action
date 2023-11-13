@@ -12,6 +12,7 @@ end
 
 COMMAND = <<~HEREDOC
 aws ecs run-task \
+  --region #{RESOURCES["REGION"]} \
   --cluster #{RESOURCES["LARIDAE_CLUSTER"]} \
   --task-definition #{RESOURCES["LARIDAE_TASK_DEFINITION"]} \
   --launch-type FARGATE \
@@ -40,7 +41,7 @@ JSON
 
 if action == 'contract'
   puts "Waiting for service to redeploy..."
-  `aws ecs wait services-stable --cluster #{RESOURCES["APP_CLUSTER"]} --services #{RESOURCES["APP_SERVICE"]}`
+  `aws ecs wait services-stable --region #{RESOURCES["REGION"]} --cluster #{RESOURCES["APP_CLUSTER"]} --services #{RESOURCES["APP_SERVICE"]}`
   puts "Deployment complete."
 end
 puts "Spinning up Fargate task running laridae to #{action}"
@@ -50,7 +51,7 @@ task_creation_result = JSON.parse(`#{COMMAND}`)
 task_id = task_creation_result['tasks'][0]['taskArn']
 puts "Polling task status..."
 loop do
-  task_describe_result = JSON.parse(`aws ecs describe-tasks --cluster "#{RESOURCES["LARIDAE_CLUSTER"]}" --tasks #{task_id}`)
+  task_describe_result = JSON.parse(`aws ecs describe-tasks --region #{RESOURCES["REGION"]} --cluster "#{RESOURCES["LARIDAE_CLUSTER"]}" --tasks #{task_id}`)
   status = task_describe_result["tasks"][0]["attachments"][0]["status"]
   puts status
   break if status == 'DELETED'
