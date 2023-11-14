@@ -8,7 +8,7 @@ migration_json = JSON.parse(File.read(MIGRATION_SCRIPT_FILENAME))
 migration_name = migration_json["name"]
 
 # add support for existing query params
-new_database_url = "#{RESOURCES["RDS_URL"]}?currentSchema=laridae_#{migration_name},public"
+new_database_url = "#{RESOURCES["RDS_URL"]}?options=-csearch_path%3Dlaridae_#{migration_name},public"
 
 def update_environment_variables(new_database_url)
   task_definition_str = `aws ecs describe-task-definition --task-definition #{RESOURCES["APP_TASK_DEFINITION_FAMILY"]} --region #{RESOURCES["REGION"]}`
