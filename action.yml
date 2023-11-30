@@ -41,11 +41,10 @@ runs:
         ref: main
         path: scripts
     - name: Authenticate to AWS
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ inputs.aws-access-key-id }}
-        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
-        aws-region: ${{ inputs.aws-region }}
+      env:
+        RESOURCE_NAMES: ${{ inputs.aws-resource-names }}
+      run: ruby scripts/scripts/authenticate.rb
+      shell: bash
     - if: ${{ inputs.action == 'expand' || inputs.action == 'full' }}
       name: Spin up ECS task running laridae to expand
       env:

@@ -7,8 +7,15 @@ MIGRATION_SCRIPT_FILENAME = "#{__dir__}/../../migration_script/laridae_migration
 migration_json = JSON.parse(File.read(MIGRATION_SCRIPT_FILENAME))
 migration_name = migration_json["name"]
 
-# add support for existing query params
-new_database_url = "#{RESOURCES["RDS_URL"]}?options=-csearch_path%3Dlaridae_#{migration_name},public"
+def new_database_url(migration_script_json)
+  migration_name = migration_script_json["name"]
+  schema = migration_script_json["info"]["schema"]
+  if @db_url.include?('?')
+    "#{@db_url}&options=-csearch_path%3Dlaridae_#{migration_name},#{migration_schema}"
+  else
+    "#{@db_url}?options=-csearch_path%3Dlaridae_#{migration_name},#{migration_schema}"
+  end
+end
 
 def update_environment_variables(new_database_url)
   task_definition_str = `aws ecs describe-task-definition --task-definition #{RESOURCES["APP_TASK_DEFINITION_FAMILY"]} --region #{RESOURCES["REGION"]}`
@@ -28,7 +35,7 @@ def update_environment_variables(new_database_url)
   `#{command}`
 end
 
-update_environment_variables(new_database_url)
+update_environment_variables(new_database_url(migration_json))
 
 ECR_URL = RESOURCES["APP_IMAGE_URL"].split("/")[0...-1].join("/")
 
