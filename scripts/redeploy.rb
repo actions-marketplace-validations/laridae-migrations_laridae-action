@@ -7,13 +7,13 @@ MIGRATION_SCRIPT_FILENAME = "#{__dir__}/../../migration_script/laridae_migration
 migration_json = JSON.parse(File.read(MIGRATION_SCRIPT_FILENAME))
 migration_name = migration_json["name"]
 
-def new_database_url(migration_script_json)
+def new_database_url(database_url, migration_script_json)
   migration_name = migration_script_json["name"]
   schema = migration_script_json["info"]["schema"]
-  if @db_url.include?('?')
-    "#{@db_url}&options=-csearch_path%3Dlaridae_#{migration_name},#{migration_schema}"
+  if database_url.include?('?')
+    "#{database_url}&options=-csearch_path%3Dlaridae_#{migration_name},#{migration_schema}"
   else
-    "#{@db_url}?options=-csearch_path%3Dlaridae_#{migration_name},#{migration_schema}"
+    "#{database_url}?options=-csearch_path%3Dlaridae_#{migration_name},#{migration_schema}"
   end
 end
 
@@ -29,19 +29,20 @@ def update_environment_variables(new_database_url)
     environment_variable["name"] == "DATABASE_URL"
   end
   db_environment_variable["value"] = new_database_url
-  puts JSON.pretty_generate(updated_json)
   input_for_new_definition = JSON.generate(updated_json).gsub('"', '\\"')
   command = "aws ecs register-task-definition --region #{RESOURCES["REGION"]} --cli-input-json \"#{input_for_new_definition}\""
   `#{command}`
 end
 
-update_environment_variables(new_database_url(migration_json))
+puts "Updating task definition to reference post-migration schema."
+update_environment_variables(new_database_url(RESOURCES["DATABASE_URL"], migration_json))
 
 ECR_URL = RESOURCES["APP_IMAGE_URL"].split("/")[0...-1].join("/")
 
 # Note that us-east-1 in the first command must be us-east-1; it doesn't depend on the user's region
 COMMAND = <<HEREDOC
 cd repo
+echo "Pushing new docker image..."
 aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin #{ECR_URL}
 docker build -t #{RESOURCES["IMAGE_NAME"]}:${GITHUB_SHA} .
 docker tag #{RESOURCES["IMAGE_NAME"]}:${GITHUB_SHA} #{RESOURCES["APP_IMAGE_URL"]}:${GITHUB_SHA}
